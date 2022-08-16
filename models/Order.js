@@ -1,23 +1,45 @@
-const mongoose = require("mongoose");
-
-const OrderSchema = new mongoose.Schema({
-  createdAt: {
-    type: Date,
-    default: Date.now,
+const { Schema } = require('mongoose');
+const mongoose = require('mongoose');
+// const LineItem = new mongoose.Schema({
+//   quantity: {
+//     type: Number,
+//   },
+//   variant: {
+//     type: mongoose.Schema.ObjectId,
+//     ref: 'Variant',
+//     required: true,
+//   },
+// });
+const OrderSchema = new mongoose.Schema(
+  {
+    order_number: {
+      type: Number,
+    },
+    variants: [
+      {
+        variant: {
+          type: mongoose.Schema.ObjectId,
+          ref: 'Variant',
+          required: true,
+        },
+        quantity: {
+          type: Number,
+        },
+      },
+    ],
+    user: {
+      type: mongoose.Schema.ObjectId,
+      ref: 'User',
+      required: true,
+    },
+    total_bill: {
+      type: Number,
+    },
   },
-  lineitem: {
-    type: mongoose.Schema.ObjectId,
-    ref: "LineItem",
-    required: true,
-  },
-  user: {
-    type: mongoose.Schema.ObjectId,
-    ref: "User",
-    required: true,
-  },
-});
+  { timestamps: true }
+);
 
 // Prevent user from submitting more than one review per bootcamp
-ReviewSchema.index({ lineitem: 1, user: 1 }, { unique: true });
+// OrderSchema.index({ user: 1 }, { unique: true });
 
-module.exports = mongoose.model("Order", OrderSchema);
+module.exports = mongoose.model('Order', OrderSchema);

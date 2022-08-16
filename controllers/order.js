@@ -1,3 +1,87 @@
+const ErrorResponse = require('../utils/errorResponse');
+const asyncHandler = require('../middleware/async');
+const Order = require('../models/Order');
+
+// @desc      Get orders
+// @route     GET /api/v1/orders
+// @access    Private
+exports.getOrders = asyncHandler(async (req, res, next) => {
+  const orders = await Order.find({ user: req.user._id })
+    .populate([
+      {
+        path: 'user',
+        model: 'User',
+        select: 'email first_name',
+      },
+      {
+        path: 'variants.variant',
+        model: 'Variant',
+        select: 'title price image description',
+      },
+    ])
+    .sort('-createdAt');
+
+  return res.status(200).json({
+    success: true,
+    count: orders.length,
+    data: orders,
+  });
+});
+
+// @desc      Get single order
+// @route     GET /api/v1/orders/:id
+// @access    Private
+exports.getOrder = asyncHandler(async (req, res, next) => {
+  const order = await Order.findById(req.params.id).populate([
+    {
+      path: 'user',
+      model: 'User',
+      select: 'email first_name',
+    },
+    {
+      path: 'variants.variant',
+      model: 'Variant',
+      select: 'title price image description',
+    },
+  ]);
+
+  if (!order) {
+    return next(
+      new ErrorResponse(`No order with the id of ${req.params.id}`),
+      404
+    );
+  }
+
+  res.status(200).json({
+    success: true,
+    data: order,
+  });
+});
+
+// @desc      Place order
+// @route     POST /api/v1/order
+// @access    Private
+exports.placeOrder = asyncHandler(async (req, res, next) => {
+  const user_id = req.user._id;
+  let items = req.body.line_items?.map((item) => {
+    return {
+      quantity: item?.quantity,
+      variant: item?._id,
+    };
+  });
+
+  const order = await Order.create({
+    user: user_id,
+    variants: items,
+    total_bill: req.body?.total_bill,
+  });
+
+  res.status(200).json({
+    success: true,
+    data: order,
+  });
+});
+
 // const ErrorResponse = require('../utils/errorResponse');
 // const asyncHandler = require('../middleware/async');
 // const Course = require('../models/Course');
